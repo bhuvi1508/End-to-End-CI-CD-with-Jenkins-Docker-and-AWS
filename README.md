@@ -70,11 +70,6 @@ services:
         image: your-dockerhub-username/your-image-name:tag
         ports:
             - "8080:80"
-        volumes:
-            - web-data:/usr/share/nginx/html
-
-volumes:
-    web-data:
 ```
 
 Replace `your-dockerhub-username/your-image-name:tag` with your actual image name and tag.
