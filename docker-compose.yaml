@@ -4,8 +4,3 @@ services:
         image: pwdx/nextjs-app
         ports:
             - "3000:80"
-        volumes:
-            - web-data:/usr/share/nginx/html
-
-volumes:
-    web-data:
