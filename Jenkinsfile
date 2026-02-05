@@ -55,12 +55,12 @@ pipeline {
                         ssh-keyscan -H ${SERVER_IP} >> ~/.ssh/known_hosts
 
                         sshpass -p "${SERVER_PASS}" scp docker-compose.yaml \
-                            ${SERVER_USER}@${SERVER_IP}:/home/${SERVER_USER}/docker-compose.yaml
+                            ${SERVER_USER}@${SERVER_IP}:/${SERVER_USER}/docker-compose.yaml
 
                         sshpass -p "${SERVER_PASS}" ssh -o StrictHostKeyChecking=no \
                             ${SERVER_USER}@${SERVER_IP} '
                             docker pull ${IMAGE_NAME}:latest &&
-                            docker-compose -f /home/${SERVER_USER}/docker-compose.yaml up -d
+                            docker-compose -f /${SERVER_USER}/docker-compose.yaml up -d
                             '
                         """
                     }
