@@ -1,0 +1,60 @@
+pipeline{
+    agent any
+
+    environment{
+        IMAGE_NAME = 'jamiekariuki/nextjs-app'
+        SERVER_IP = 'ubuntu@35.178.105.43'
+    }
+
+    stages{
+        stage("Checkout code"){
+            steps{
+                echo "Checking out code from repository...."  
+            }
+        }
+
+        
+
+        stage("Build docker image"){
+            steps{
+               
+                 script{
+                    echo "Building docker image..."
+                    withCredentials([usernamePassword(credentialsId:'dockerHub', passwordVariable:'PASSWORD', usernameVariable:'USERNAME')]){
+                        sh "docker build -t ${IMAGE_NAME} ."
+                        sh '''
+                            echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
+                        '''
+                        sh "docker push ${IMAGE_NAME}"
+                    }
+                }
+            }   
+        }
+
+       
+        stage("Deploy to AWS"){
+            steps{
+        script{
+            echo "Deploying docker image to AWS..."
+            def dockerCmd = "sudo docker-compose -f docker-compose.yaml up --detach"
+            sshagent(['ec2-server-key']) {
+    sh "mkdir -p ~/.ssh"
+    sh "ssh-keyscan -H ${SERVER_IP.split('@')[1]} >> ~/.ssh/known_hosts"
+    sh "scp docker-compose.yaml ${SERVER_IP}:/home/ubuntu"
+    sh "ssh -o StrictHostKeyChecking=no ${SERVER_IP} '${dockerCmd}'"
+}
+        } 
+    }    
+}
+    }
+
+    post{
+        
+        success{
+            echo "The pipline succesfuly depoyed the app to AWS"
+        }
+        failure{
+            echo "The pipline failed to deploy the app to AWS!"
+        }
+    }
+}
