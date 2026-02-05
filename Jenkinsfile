@@ -28,7 +28,8 @@ pipeline {
                         )
                     ]) {
                         sh """
-                        docker build -t ${IMAGE_NAME}:latest .
+                        docker build --no-cache -t pwdx/nextjs-app:${BUILD_NUMBER} .
+                        docker tag pwdx/nextjs-app:${BUILD_NUMBER} pwdx/nextjs-app:latest
                         echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
                         docker push ${IMAGE_NAME}:latest
                         docker logout
