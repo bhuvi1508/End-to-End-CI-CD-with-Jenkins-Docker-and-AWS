@@ -3,7 +3,7 @@ pipeline{
 
     environment{
         IMAGE_NAME = 'jamiekariuki/nextjs-app'
-        SERVER_IP = 'ubuntu@35.178.105.43'
+        SERVER_IP = 'root@100.24.113.21'
     }
 
     stages{
