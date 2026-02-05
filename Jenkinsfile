@@ -1,60 +1,80 @@
-pipeline{
+pipeline {
     agent any
 
-    environment{
+    environment {
         IMAGE_NAME = 'pwdx/nextjs-app'
-        SERVER_IP = 'root@100.24.113.21'
+        SERVER_IP  = '100.24.113.21'   // IP ONLY (no user here)
     }
 
-    stages{
-        stage("Checkout code"){
-            steps{
-                echo "Checking out code from repository...."  
+    stages {
+
+        stage("Checkout code") {
+            steps {
+                echo "Checking out code from repository..."
+                checkout scm
             }
         }
 
-        
+        stage("Build & Push Docker Image") {
+            steps {
+                script {
+                    echo "Building and pushing Docker image..."
 
-        stage("Build docker image"){
-            steps{
-               
-                 script{
-                    echo "Building docker image..."
-                    withCredentials([usernamePassword(credentialsId:'dockerHub', passwordVariable:'PASSWORD', usernameVariable:'USERNAME')]){
-                        sh "docker build -t ${IMAGE_NAME} ."
-                        sh '''
-                            echo "$PASSWORD" | docker login -u "$USERNAME" --password-stdin
-                        '''
-                        sh "docker push ${IMAGE_NAME}"
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'dockerHub',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )
+                    ]) {
+                        sh """
+                        docker build -t ${IMAGE_NAME}:latest .
+                        echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                        docker push ${IMAGE_NAME}:latest
+                        docker logout
+                        """
                     }
                 }
-            }   
+            }
         }
 
-       
-        stage("Deploy to AWS"){
-            steps{
-        script{
-            echo "Deploying docker image to AWS..."
-            def dockerCmd = "sudo docker-compose -f docker-compose.yaml up --detach"
-            sshagent(['ec2-server-key']) {
-    sh "mkdir -p ~/.ssh"
-    sh "ssh-keyscan -H ${SERVER_IP.split('@')[1]} >> ~/.ssh/known_hosts"
-    sh "scp docker-compose.yaml ${SERVER_IP}:/home/ubuntu"
-    sh "ssh -o StrictHostKeyChecking=no ${SERVER_IP} '${dockerCmd}'"
-}
-        } 
-    }    
-}
+        stage("Deploy to AWS") {
+            steps {
+                script {
+                    echo "Deploying Docker image to AWS EC2..."
+
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'app.server',
+                            usernameVariable: 'SERVER_USER',
+                            passwordVariable: 'SERVER_PASS'
+                        )
+                    ]) {
+                        sh """
+                        mkdir -p ~/.ssh
+                        ssh-keyscan -H ${SERVER_IP} >> ~/.ssh/known_hosts
+
+                        sshpass -p "${SERVER_PASS}" scp docker-compose.yaml \
+                            ${SERVER_USER}@${SERVER_IP}:/home/${SERVER_USER}/docker-compose.yaml
+
+                        sshpass -p "${SERVER_PASS}" ssh -o StrictHostKeyChecking=no \
+                            ${SERVER_USER}@${SERVER_IP} '
+                            docker pull ${IMAGE_NAME}:latest &&
+                            docker-compose -f /home/${SERVER_USER}/docker-compose.yaml up -d
+                            '
+                        """
+                    }
+                }
+            }
+        }
     }
 
-    post{
-        
-        success{
-            echo "The pipline succesfuly depoyed the app to AWS"
+    post {
+        success {
+            echo "✅ Pipeline successfully deployed the app to AWS"
         }
-        failure{
-            echo "The pipline failed to deploy the app to AWS!"
+        failure {
+            echo "❌ Pipeline failed to deploy the app to AWS"
         }
     }
 }
