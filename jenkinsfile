@@ -2,7 +2,7 @@ pipeline{
     agent any
 
     environment{
-        IMAGE_NAME = 'jamiekariuki/nextjs-app'
+        IMAGE_NAME = 'pwdx/nextjs-app'
         SERVER_IP = 'root@100.24.113.21'
     }
 
