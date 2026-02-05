@@ -1,4 +1,4 @@
-# Simple Web Application – End-to-End DevOps Demo
+## Simple Web Application – End-to-End DevOps Demo
 
 This is a simple web application that displays the message "This is an end-to-end DevOps project." It is designed to demonstrate the use of Docker for containerization and CI/CD with Jenkins.
 
