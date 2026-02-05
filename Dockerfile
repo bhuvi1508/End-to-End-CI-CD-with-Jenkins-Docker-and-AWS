@@ -1,4 +1,11 @@
 FROM nginx:alpine
-COPY src /usr/share/nginx/html
+
+# Remove default nginx content
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy latest source code
+COPY src/ /usr/share/nginx/html/
+
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
