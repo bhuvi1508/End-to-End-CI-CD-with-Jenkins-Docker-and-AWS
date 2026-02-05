@@ -60,6 +60,7 @@ pipeline {
                         sshpass -p "${SERVER_PASS}" ssh -o StrictHostKeyChecking=no \
                             ${SERVER_USER}@${SERVER_IP} '
                             docker pull ${IMAGE_NAME}:latest &&
+                            docker-compose down &&
                             docker-compose -f /${SERVER_USER}/docker-compose.yaml up -d
                             '
                         """
